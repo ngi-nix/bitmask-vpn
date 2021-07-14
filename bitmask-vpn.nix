@@ -62,7 +62,7 @@ stdenv.mkDerivation {
         cp bitmask.pro gui
 
         ln -s ${libgoshim}/lib gui/lib
-        sed -i 's/\/usr\/bin\/env/'"$(which env | sed 's/\//\\\//gm')"'/' ./branding/scripts/* ./gui/build.sh
+        patchShebangs --build ./branding/scripts/ ./gui/build.sh
         make build_gui
       '';
 
@@ -81,4 +81,12 @@ stdenv.mkDerivation {
     '';
 
   src = bitmask-src;
+
+  meta = with lib; {
+    homepage = "https://0xacab.org/leap/bitmask-vpn";
+    description = "A golang implementation of the Bitmask VPN client, displaying a systray icon as a state indicator and control.";
+    license = licenses.gpl3Only;
+    platforms = platforms.unix;
+    maintainers = [ maintainers.magic_rb ];
+  };
 }
