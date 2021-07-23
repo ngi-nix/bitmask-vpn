@@ -1,4 +1,4 @@
-{ fetchFromGitHub
+{ fetchFromGitLab
 , buildGoModule
 , stdenv
 , lib
@@ -16,27 +16,23 @@
 
 let
   version = "0.21.6";
-  bitmask-src = fetchFromGitHub {
-    owner = "MagicRB";
+  src = fetchFromGitLab {
+    domain = "0xacab.org";
+    owner = "leap";
     repo = "bitmask-vpn";
-    rev = "d0dfbf9ddc4aa8639ab31745516988c1937c7f77";
-    sha256 = "sha256-2iOV8PHXS07aGR98z7AALwIZoAK/+9eTFLGexHGueBw=";
+    rev = "0.21.6";
+    sha256 = "sha256-LMz+ZgQVFGujoLA8rlyZ3VnW/NSlPipD5KwCe+cFtnY=";
   };
-  # prev.fetchFromGitLab {
-  #   domain = "0xacab.org";
-  #   owner = "leap";
-  #   repo = "bitmask-vpn";
-  #   rev = "0.21.6";
-  #   sha256 = "sha256-LMz+ZgQVFGujoLA8rlyZ3VnW/NSlPipD5KwCe+cFtnY=";
-  # };
 
   libgoshim = buildGoModule {
     name = "bitmask-stuff";
-    inherit version;
+    inherit version src;
 
     vendorSha256 = null;
 
     doCheck = false;
+
+    patches = [ ./patches/0001-Fix-random-hardcoded-paths-for-NixOS-packaging.patch ];
 
     subPackages = [
       "pkg/backend"
@@ -47,26 +43,24 @@ let
       go build -buildmode=c-archive -o $out/lib/libgoshim.a gui/backend.go
     '';
 
-    src = bitmask-src;
+    enableParallelBuilding = true;
   };
 in
 stdenv.mkDerivation {
   name = "bitmask-gui";
-  inherit version;
+  inherit version src;
 
   buildPhase =
-    let
-      escapePath = path: builtins.replaceStrings ["/"] ["\\/"] (toString path);
-    in
-      ''
-        cp bitmask.pro gui
+    ''
+      cp bitmask.pro gui
 
-        ln -s ${libgoshim}/lib gui/lib
-        patchShebangs --build ./branding/scripts/ ./gui/build.sh
-        make build_gui
-      '';
+      ln -s ${libgoshim}/lib gui/lib
+      patchShebangs --build ./branding/scripts/ ./gui/build.sh
+      make build_gui
+    '';
 
-  buildInputs = with qt5; [ qtbase qttools qtquickcontrols2 libsForQt5.qtinstaller libgoshim ];
+  buildInputs = with qt5;
+    [ qtbase qttools qtquickcontrols2 libsForQt5.qtinstaller libgoshim ];
   nativeBuildInputs = with qt5; [ makeWrapper go wrapQtAppsHook which python3 ];
 
   installPhase = ''
@@ -80,7 +74,7 @@ stdenv.mkDerivation {
       wrapProgram $out/bin/bitmask-root --prefix PATH : ${lib.makeBinPath [ openvpn iptables python3 ]}
     '';
 
-  src = bitmask-src;
+  enableParallelBuilding = true;
 
   meta = with lib; {
     homepage = "https://0xacab.org/leap/bitmask-vpn";

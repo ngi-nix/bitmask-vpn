@@ -1,0 +1,63 @@
+From d0dfbf9ddc4aa8639ab31745516988c1937c7f77 Mon Sep 17 00:00:00 2001
+From: Magic_RB <magic_rb@redalder.org>
+Date: Mon, 5 Jul 2021 14:41:39 +0200
+Subject: [PATCH] Fix random hardcoded paths for NixOS packaging
+
+Signed-off-by: Magic_RB <magic_rb@redalder.org>
+---
+ gui/build.sh              | 2 +-
+ helpers/bitmask-root      | 2 +-
+ pkg/vpn/launcher_linux.go | 8 ++++++++
+ 3 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/gui/build.sh b/gui/build.sh
+index 56e3d66..99b94d5 100755
+--- a/gui/build.sh
++++ b/gui/build.sh
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/usr/bin/env bash
+ set -e
+ 
+ # DEBUG --------------
+diff --git a/helpers/bitmask-root b/helpers/bitmask-root
+index f105bfc..2230ad7 100644
+--- a/helpers/bitmask-root
++++ b/helpers/bitmask-root
+@@ -101,7 +101,7 @@ def swhich(binary):
+ 
+     :rtype: str
+     """
+-    for folder in ["/sbin", "/usr/sbin", "/usr/local/sbin"]:
++    for folder in os.environ['PATH'].split(':'):
+         path = os.path.join(folder, binary)
+         if os.path.isfile(path):
+             return path
+diff --git a/pkg/vpn/launcher_linux.go b/pkg/vpn/launcher_linux.go
+index 3e872cd..b4613d4 100644
+--- a/pkg/vpn/launcher_linux.go
++++ b/pkg/vpn/launcher_linux.go
+@@ -233,6 +233,10 @@ func bitmaskRootPath() (string, error) {
+ 			return path, nil
+ 		}
+ 	}
++	path, err := exec.LookPath("bitmask-root")
++	if err == nil {
++		return path, nil
++	}
+ 	log.Println("Can't find bitmask-root")
+ 	return "", errors.New("nohelpers")
+ }
+@@ -241,5 +245,9 @@ func getOpenvpnPath() string {
+ 	if os.Getenv("SNAP") != "" {
+ 		return "/snap/bin/" + config.BinaryName + ".openvpn"
+ 	}
++	path, err := exec.LookPath("openvpn")
++	if err == nil {
++		return path
++	}
+ 	return systemOpenvpnPath
+ }
+-- 
+2.32.0
+
