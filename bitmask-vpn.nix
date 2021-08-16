@@ -12,6 +12,7 @@
 , python3
 , openvpn
 , iptables
+, iproute
 }:
 
 let
@@ -59,6 +60,8 @@ stdenv.mkDerivation {
       make build_gui
     '';
 
+  patches = [ ./patches/0001-Fix-random-hardcoded-paths-for-NixOS-packaging.patch ];
+
   buildInputs = with qt5;
     [ qtbase qttools qtquickcontrols2 libsForQt5.qtinstaller libgoshim ];
   nativeBuildInputs = with qt5; [ makeWrapper go wrapQtAppsHook which python3 ];
@@ -70,7 +73,7 @@ stdenv.mkDerivation {
       install -Dm755 helpers/bitmask-root $out/bin/bitmask-root
       install -Dm0644 helpers/se.leap.bitmask.policy $out/share/polkit-1/actions/se.leap.bitmask.policy
 
-      wrapProgram $out/bin/riseup-vpn --prefix PATH : $out/bin
+      wrapProgram $out/bin/riseup-vpn --prefix PATH : $out/bin:${lib.makeBinPath [ iproute ]}
       wrapProgram $out/bin/bitmask-root --prefix PATH : ${lib.makeBinPath [ openvpn iptables python3 ]}
     '';
 
@@ -79,6 +82,7 @@ stdenv.mkDerivation {
   meta = with lib; {
     homepage = "https://0xacab.org/leap/bitmask-vpn";
     description = "A golang implementation of the Bitmask VPN client, displaying a systray icon as a state indicator and control.";
+    mainProgram = "riseup-vpn";
     license = licenses.gpl3Only;
     platforms = platforms.unix;
     maintainers = [ maintainers.magic_rb ];

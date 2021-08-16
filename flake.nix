@@ -30,9 +30,16 @@
             pkgs.bitmask-vpn
         );
 
+        apps = self.packages;
+
+        defaultApp = self.defaultPackage;
+
         devShell = forAllSystems (system:
           let
-            pkgs = import nixpkgs { inherit system; overlays = mapAttrsToList (_: id) self.overlays; };
+            pkgs = import nixpkgs
+              { inherit system;
+                overlays = mapAttrsToList (_: id) self.overlays;
+              };
           in
             pkgs.mkShell {
               buildInputs = with pkgs.qt5; with pkgs;
