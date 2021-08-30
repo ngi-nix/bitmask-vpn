@@ -30,9 +30,18 @@
             pkgs.bitmask-vpn
         );
 
-        apps = self.packages;
+        apps = mapAttrs (_: v:
+          mapAttrs (_: a:
+            {
+              type = "app";
+              program = a;
+            }
+          ) v
+        ) self.packages;
 
-        defaultApp = self.defaultPackage;
+        defaultApp = mapAttrs (_: v:
+          v.bitmask-vpn
+        ) self.apps;
 
         devShell = forAllSystems (system:
           let
